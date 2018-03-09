@@ -9,6 +9,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from skimage import io
 from scipy import ndimage
+from scipy.ndimage import gaussian_filter
+
 
 """
 #############################################################################
@@ -24,7 +26,7 @@ from scipy import ndimage
 
 def derivees(Img,filtre):
     """
-    Fonction calculant les dérivées d'une image par un filtre 
+    Calcul des dérivées d'une image par un filtre 
     """
     Ix = ndimage.filters.convolve(Img,filtre)
     Iy = ndimage.filters.convolve(Img,np.transpose(filtre))
@@ -33,7 +35,7 @@ def derivees(Img,filtre):
 
 def gradient(Ix,Iy):
     """
-    Fonction calculant le module du gradient
+    Calcul du module du gradient
     """
     G_I = np.sqrt(Ix**2 + Iy**2)
     return G_I
@@ -41,7 +43,7 @@ def gradient(Ix,Iy):
 
 def theta(Ix,Iy,L,C):
     """
-    Fonction calculant la direction du gradient
+    Calcul de la direction du gradient
     """
     Theta_I = np.zeros((L,C))
     for l in range(L):
@@ -55,7 +57,7 @@ def theta(Ix,Iy,L,C):
 
 def gamma(R):
     """
-    Fonction déterminant les pixels se trouvant dans un rayon R au pixel de coordonnees (0,0)
+    Détermination des pixels se trouvant dans un rayon R au pixel de coordonnees (0,0)
     """
     gamma_R = []
     for i in range(-R,R+1):
@@ -73,13 +75,18 @@ def gamma(R):
 
 ####################  CALCUL DE LA CARTE DE SYMETRIE  ####################
 
-# Pondération de la paire de pixels
 def GWF(pi,pj):
+    """
+    Gradient Weight Function : Pondération de la paire de pixels
+    """
     gwf = np.log(1+G_I[pi[0],pi[1]])*np.log(1+G_I[pj[0],pj[1]])
     return gwf
 
-# Phase Weight Function
+
 def PWF(pi,pj):
+    """
+    Phase Weight Function
+    """
     if pi[0]==0:
         alpha = 0
     else:
@@ -91,8 +98,11 @@ def PWF(pi,pj):
     pwf = pwf_plus*pwf_moins
     return pwf
 
-# Valeur de la symetrie pour un pixel
+
 def symetrie(l,c,gamma_R):
+    """
+    Valeur de la symetrie pour un pixel
+    """
     s = 0
     taille = int(np.size(gamma_R)/2)
     for i in range(taille):
@@ -102,26 +112,48 @@ def symetrie(l,c,gamma_R):
             pj = np.add(gamma_R[i+1],[l,c])
             s += PWF(pi,pj) * GWF(pi,pj)
     return s
-        
-# Convoluer la carte de symetrie avec une gaussienne d'écart-type sigma
+
+
+
+
+#################### DETERMINATION DES POINTS D'INTERETS ####################        
+
 def convGauss(carteSym,sigma):
     """
-    Finir cette partie : gaussienne et faire tourner le programme
+    Convolution de la carte de symetrie par une gaussienne
     """
-    gaussienne = 0
-    #filtrage par une gaussienne
-    conv = ndimage.filters.gaussian(gaussienne,S)
+    conv = gaussian_filter(carteSym,sigma)
     return conv
+
+
+def maxLocaux(conv,seuil,fichier):
+    """
+    Détection des maximum locaux supérieurs au seuil
+    """
+    maxL = []
+    maxC = []
+    for l in range(L):
+        for c in range(C):
+            if conv[l][c] > seuil:
+                maxL.append(l)
+                maxC.append(c)
+                fichier.write(str(c)+" "+str(l)+"\n")
+    MaxL = np.asarray(maxL)
+    MaxC = np.asarray(maxC)
+    return MaxL,MaxC
+
+
+
 
 
 if __name__ == "__main__" :
     
     chemin = './'
     I = io.imread('image027.ssech4.tif')
-    plt.imshow(I)
+    plt.imshow(I,cmap='gray')
     L,C = np.shape(I)
     sobel = np.array([[-1,0,1],[-2,0,2],[-1,0,1]])
-    sigma = 0.5
+    sigma = 2
     
     Ix,Iy = derivees(I,sobel)  #Dérivées calculées avec Sobel
     G_I = gradient(Ix,Iy)
@@ -134,29 +166,18 @@ if __name__ == "__main__" :
     for l in range(R,L-R+1):
         for c in range(R,C-R+1):
             S[l][c] = symetrie(l,c,gamma_R)
-            
-    conv = convGauss(S,sigma)
-
-
-
-
-
-
-
-#Detecter les maxima locaux de R superieurs a un certain seuil
-#seuil = 
-
-
-
-
-########## Exportation des points ##########
-#Format : une ligne par point detecte avec ses coordonnes (colonne, ligne)
-
-#Creation d'un fichier texte
-#fichier = open(chemin,'w')
-#fichier.write(str(val1)+" "+str(val2)+"\n")
-
-        
-
+    
+    # Creation du fichier d'enregistrement des points d'interets
+    fichier = open("pointsInterets.txt","w")
+    
+    # Detection et enregistrement des points d'interets        
+    conv = convGauss(S,5)
+    seuil = 100
+    maxL, maxC = maxLocaux(conv,seuil,fichier)
+    
+    plt.imshow(conv,cmap='gray')
+    plt.plot(maxC,maxL)
+    plt.show()
+    
 
 
