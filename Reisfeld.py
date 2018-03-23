@@ -33,7 +33,7 @@ def derivees(Img,filtre):
     return Ix,Iy
 
 
-def gradient(Ix,Iy,L,C):
+def gradient(Ix,Iy):
     """
     Calcul du module du gradient
     """
@@ -44,7 +44,7 @@ def gradient(Ix,Iy,L,C):
     return G_I
 
 
-def theta(Ix,Iy,L,C):
+def theta(Ix,Iy):
     """
     Calcul de la direction du gradient
     """
@@ -165,52 +165,57 @@ def maxLocaux(max_loc,conv,seuil,fichier):
 
 if __name__ == "__main__" :
 
-    I = io.imread('chat.tif')
+    # Lecture de l'image à étudier
+    I = io.imread('image027.ssech4.tif')
     I = I/256
     plt.figure(1)
-    plt.title("chat de base")
+    plt.title("Image brute")
     plt.imshow(I,cmap='gray')
+    
+    # Paramètres
     L,C = np.shape(I)
     sobel = np.array([[-1,0,1],[-2,0,2],[-1,0,1]])
-    sigma = 1
+    sigma = 3
+    R = 3
+    
     
     Ix,Iy = derivees(I,sobel)  #Dérivées calculées avec Sobel
-    G_I = gradient(Ix,Iy,L,C)
+    G_I = gradient(Ix,Iy)  #Module du gradient
     plt.figure(2)
-    plt.title("chat gradient module")
+    plt.title("Module du gradient")
     plt.imshow(G_I)
-    Theta_I = theta(Ix,Iy,L,C)
+    
+    Theta_I = theta(Ix,Iy)   #Direction du gradient
     plt.figure(3)
-    plt.title("chat gradient direction")
+    plt.title("Direction du gradient")
     plt.imshow(Theta_I)
-    R = 3
-    gamma_R = gamma(R)
+    
+    gamma_R = gamma(R)  #Pixels se trouvant dans un rayon R à un pixel de ref.
     
     # Calcul de la carte de symetrie
     S = np.zeros((L,C))
     for l in range(R,L-R+1):
         for c in range(R,C-R+1):
             S[l][c] = symetrie(l,c,gamma_R,G_I,Theta_I)
-    
     plt.figure(4)
-    plt.title("chat symetrie")
+    plt.title("Carte de symétrie")
     plt.imshow(S)
     
     # Creation du fichier d'enregistrement des points d'interets
     fichier = open("pointsInterets.txt","w")
     
     # Detection et enregistrement des points d'interets        
-    conv = convGauss(S,1)
+    conv = convGauss(S,sigma)
+    plt.figure(5)
+    plt.title("Image convoluée")
+    plt.imshow(conv,cmap='gray')
+    
     max_loc = peak_local_max(conv,min_distance=10)
     seuil = seuil_loc(max_loc,conv)
     maxL, maxC = maxLocaux(max_loc,conv,seuil,fichier)
     
-    print(maxL,maxC)
-    plt.figure(5)
-    plt.title("chat conv")
-    plt.imshow(conv,cmap='gray')
     plt.figure(6)
-    plt.title("chat points interets")
+    plt.title("Points d'intérêts de l'image")
     plt.imshow(I,cmap='gray')
     plt.plot(maxC,maxL,'b+')
     plt.show()
