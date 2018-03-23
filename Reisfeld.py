@@ -152,6 +152,7 @@ def maxLocaux(conv,seuil,fichier):
 if __name__ == "__main__" :
 
     I = io.imread('chat.tif')
+    I = I/256
     plt.figure(1)
     plt.title("chat de base")
     plt.imshow(I,cmap='gray')
@@ -162,11 +163,12 @@ if __name__ == "__main__" :
     Ix,Iy = derivees(I,sobel)  #Dérivées calculées avec Sobel
     G_I = gradient(Ix,Iy,L,C)
     plt.figure(2)
-    plt.title("chat gradient")
+    plt.title("chat gradient module")
     plt.imshow(G_I)
-    print(G_I)
-    print(G_I.shape)
     Theta_I = theta(Ix,Iy,L,C)
+    plt.figure(3)
+    plt.title("chat gradient direction")
+    plt.imshow(Theta_I)
     R = 3
     gamma_R = gamma(R)
     
@@ -176,18 +178,22 @@ if __name__ == "__main__" :
         for c in range(R,C-R+1):
             S[l][c] = symetrie(l,c,gamma_R,G_I,Theta_I)
     
+    plt.figure(4)
+    plt.title("chat symetrie")
+    plt.imshow(S)
+    
     # Creation du fichier d'enregistrement des points d'interets
     fichier = open("pointsInterets.txt","w")
     
     # Detection et enregistrement des points d'interets        
-    conv = convGauss(S,3)
-    seuil = 5.0
+    conv = convGauss(S,1)
+    seuil = 40.0
     maxL, maxC = maxLocaux(conv,seuil,fichier)
     print(maxL,maxC)
-    plt.figure(3)
+    plt.figure(5)
     plt.title("chat conv")
     plt.imshow(conv,cmap='gray')
-    plt.figure(4)
+    plt.figure(6)
     plt.title("chat points interets")
     plt.imshow(I,cmap='gray')
     plt.plot(maxC,maxL,'b+')
