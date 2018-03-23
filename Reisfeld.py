@@ -33,11 +33,14 @@ def derivees(Img,filtre):
     return Ix,Iy
 
 
-def gradient(Ix,Iy):
+def gradient(Ix,Iy,L,C):
     """
     Calcul du module du gradient
     """
-    G_I = np.sqrt(Ix**2 + Iy**2)
+    G_I = np.zeros((L,C))
+    for l in range(Ix.shape[0]):
+        for c in range(Iy.shape[1]):
+            G_I[l][c] = np.sqrt(Ix[l][c]**2 + Iy[l][c]**2)
     return G_I
 
 
@@ -75,7 +78,7 @@ def gamma(R):
 
 ####################  CALCUL DE LA CARTE DE SYMETRIE  ####################
 
-def GWF(pi,pj):
+def GWF(G_I,pi,pj):
     """
     Gradient Weight Function : Pondération de la paire de pixels
     """
@@ -83,14 +86,14 @@ def GWF(pi,pj):
     return gwf
 
 
-def PWF(pi,pj):
+def PWF(Theta_I,pi,pj):
     """
     Phase Weight Function
     """
-    if pi[0]==0:
+    if pi[1]==0:
         alpha = 0
     else:
-        alpha = np.arctan(pi[1]/pi[0])
+        alpha = np.arctan(pi[0]/pi[1])
     gamma_i = Theta_I[pi[0]][pi[1]]-alpha
     gamma_j = Theta_I[pj[0],pj[1]]-alpha
     pwf_moins = 1-np.cos(gamma_i-gamma_j) 
@@ -99,7 +102,7 @@ def PWF(pi,pj):
     return pwf
 
 
-def symetrie(l,c,gamma_R):
+def symetrie(l,c,gamma_R,G_I,Theta_I):
     """
     Valeur de la symetrie pour un pixel
     """
@@ -110,7 +113,7 @@ def symetrie(l,c,gamma_R):
             # Translation d'un vecteur (l,c)
             pi = np.add(gamma_R[i],[l,c])
             pj = np.add(gamma_R[i+1],[l,c])
-            s += PWF(pi,pj) * GWF(pi,pj)
+            s += PWF(Theta_I,pi,pj) * GWF(G_I,pi,pj)
     return s
 
 
@@ -147,16 +150,22 @@ def maxLocaux(conv,seuil,fichier):
 
 
 if __name__ == "__main__" :
-    
-    chemin = './'
-    I = io.imread('image027.ssech4.tif')
+
+    I = io.imread('chat.tif')
+    plt.figure(1)
+    plt.title("chat de base")
     plt.imshow(I,cmap='gray')
     L,C = np.shape(I)
     sobel = np.array([[-1,0,1],[-2,0,2],[-1,0,1]])
-    sigma = 2
+    sigma = 1
     
     Ix,Iy = derivees(I,sobel)  #Dérivées calculées avec Sobel
-    G_I = gradient(Ix,Iy)
+    G_I = gradient(Ix,Iy,L,C)
+    plt.figure(2)
+    plt.title("chat gradient")
+    plt.imshow(G_I)
+    print(G_I)
+    print(G_I.shape)
     Theta_I = theta(Ix,Iy,L,C)
     R = 3
     gamma_R = gamma(R)
@@ -165,18 +174,23 @@ if __name__ == "__main__" :
     S = np.zeros((L,C))
     for l in range(R,L-R+1):
         for c in range(R,C-R+1):
-            S[l][c] = symetrie(l,c,gamma_R)
+            S[l][c] = symetrie(l,c,gamma_R,G_I,Theta_I)
     
     # Creation du fichier d'enregistrement des points d'interets
     fichier = open("pointsInterets.txt","w")
     
     # Detection et enregistrement des points d'interets        
-    conv = convGauss(S,5)
-    seuil = 100
+    conv = convGauss(S,3)
+    seuil = 5.0
     maxL, maxC = maxLocaux(conv,seuil,fichier)
-    
+    print(maxL,maxC)
+    plt.figure(3)
+    plt.title("chat conv")
     plt.imshow(conv,cmap='gray')
-    plt.plot(maxC,maxL)
+    plt.figure(4)
+    plt.title("chat points interets")
+    plt.imshow(I,cmap='gray')
+    plt.plot(maxC,maxL,'b+')
     plt.show()
     
 
