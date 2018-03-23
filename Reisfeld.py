@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 from skimage import io
 from scipy import ndimage
 from scipy.ndimage import gaussian_filter
-
+from skimage.feature import peak_local_max
 
 """
 #############################################################################
@@ -129,21 +129,35 @@ def convGauss(carteSym,sigma):
     return conv
 
 
-def maxLocaux(conv,seuil,fichier):
+def seuil_loc(max_loc,conv):
+    """
+    Détermination du seuil moyen des maxima locaux
+    """
+    taille = max_loc.shape[0]
+    seuil = 0
+    for t in range(taille):
+        seuil += conv[max_loc[t][0]][max_loc[t][1]]
+    seuil /= taille
+    return seuil
+
+
+def maxLocaux(max_loc,conv,seuil,fichier):
     """
     Détection des maximum locaux supérieurs au seuil
     """
     maxL = []
     maxC = []
-    for l in range(L):
-        for c in range(C):
-            if conv[l][c] > seuil:
-                maxL.append(l)
-                maxC.append(c)
-                fichier.write(str(c)+" "+str(l)+"\n")
+    taille = max_loc.shape[0]
+    for t in range(taille):
+        if conv[max_loc[t][0]][max_loc[t][1]]>seuil:
+            maxL.append(max_loc[t][0])
+            maxC.append(max_loc[t][1])
+            fichier.write(str(max_loc[t][1])+" "+str(max_loc[t][0])+"\n")
     MaxL = np.asarray(maxL)
     MaxC = np.asarray(maxC)
     return MaxL,MaxC
+
+
 
 
 
@@ -187,8 +201,10 @@ if __name__ == "__main__" :
     
     # Detection et enregistrement des points d'interets        
     conv = convGauss(S,1)
-    seuil = 40.0
-    maxL, maxC = maxLocaux(conv,seuil,fichier)
+    max_loc = peak_local_max(conv,min_distance=10)
+    seuil = seuil_loc(max_loc,conv)
+    maxL, maxC = maxLocaux(max_loc,conv,seuil,fichier)
+    
     print(maxL,maxC)
     plt.figure(5)
     plt.title("chat conv")
