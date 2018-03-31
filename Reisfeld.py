@@ -166,27 +166,27 @@ def maxLocaux(max_loc,conv,seuil,fichier):
 if __name__ == "__main__" :
 
     # Lecture de l'image à étudier
-    I = io.imread('image027.ssech4.tif')
+    I = io.imread('chat.tif')
     I = I/256
-    plt.figure(1)
+    plt.figure()
     plt.title("Image brute")
     plt.imshow(I,cmap='gray')
     
     # Paramètres
     L,C = np.shape(I)
     sobel = np.array([[-1,0,1],[-2,0,2],[-1,0,1]])
-    sigma = 3
-    R = 3
+    sigma = 1
+    R = 8
     
     
     Ix,Iy = derivees(I,sobel)  #Dérivées calculées avec Sobel
     G_I = gradient(Ix,Iy)  #Module du gradient
-    plt.figure(2)
+    plt.figure()
     plt.title("Module du gradient")
     plt.imshow(G_I)
     
     Theta_I = theta(Ix,Iy)   #Direction du gradient
-    plt.figure(3)
+    plt.figure()
     plt.title("Direction du gradient")
     plt.imshow(Theta_I)
     
@@ -197,7 +197,7 @@ if __name__ == "__main__" :
     for l in range(R,L-R+1):
         for c in range(R,C-R+1):
             S[l][c] = symetrie(l,c,gamma_R,G_I,Theta_I)
-    plt.figure(4)
+    plt.figure()
     plt.title("Carte de symétrie")
     plt.imshow(S)
     
@@ -206,7 +206,7 @@ if __name__ == "__main__" :
     
     # Detection et enregistrement des points d'interets        
     conv = convGauss(S,sigma)
-    plt.figure(5)
+    plt.figure()
     plt.title("Image convoluée")
     plt.imshow(conv,cmap='gray')
     
@@ -214,7 +214,7 @@ if __name__ == "__main__" :
     seuil = seuil_loc(max_loc,conv)
     maxL, maxC = maxLocaux(max_loc,conv,seuil,fichier)
     
-    plt.figure(6)
+    plt.figure()
     plt.title("Points d'intérêts de l'image")
     plt.imshow(I,cmap='gray')
     plt.plot(maxC,maxL,'b+')
