@@ -22,16 +22,8 @@ from Reisfeld import derivees, gradient, theta, gamma
 #############################################################################
 """
 
-"""
-fonction gamma R à modifier ! :) calculer des delta !
-"""
 
 ####################  CALCUL DE LA CARTE DE SYMETRIE  ####################
-
-
-"""
-Rajouter les k et l dans les fonctions ! (issus de delta)
-"""
 
 
 def GWF(G_I,pi,pj):
@@ -52,8 +44,10 @@ def PWF(Theta_I,pi,pj):
         alpha = np.arctan(pi[0]/pi[1])
     gamma_i = Theta_I[pi[0]][pi[1]]-alpha
     gamma_j = Theta_I[pj[0],pj[1]]-alpha
-    pwf_moins = 1-np.cos(gamma_i-gamma_j) 
-    pwf_plus = 1-np.cos(gamma_i+gamma_j) 
+#    pwf_moins = 1-np.cos(gamma_i-gamma_j) 
+#    pwf_plus = 1-np.cos(gamma_i+gamma_j) 
+    pwf_moins = (np.cos(gamma_i))**2 * (np.cos(gamma_j))**2
+    pwf_plus = (np.cos(gamma_i+gamma_j))**2
     pwf = pwf_plus*pwf_moins
     return pwf
 
@@ -61,6 +55,9 @@ def PWF(Theta_I,pi,pj):
 def symetrie(l,c,gamma_R,G_I,Theta_I):
     """
     Valeur de la symetrie pour un pixel
+    
+    Le calcul de la nouvelle carte de symétrie ne marche pas totalement à cause de la gestion 
+    des différents cas pour les couleurs
     """
     s = 0
     taille = int(np.size(gamma_R)/2)
@@ -69,6 +66,14 @@ def symetrie(l,c,gamma_R,G_I,Theta_I):
             # Translation d'un vecteur (l,c)
             pi = np.add(gamma_R[i],[l,c])
             pj = np.add(gamma_R[i+1],[l,c])
+#            for coul in range(3):
+#                for coul2 in range(coul+1,3):            
+#                    if G_Ir[l+pi[0]][c+pi[1]] > seuilR and G_Iv[l+pj[0]][c+pj[1]] > seuilV :
+#                        k = [0,1]
+#                    elif G_Iv[l+pi[0]][c+pi[1]] > seuilV and G_Ir[l+pj[0]][c+pj[1]] > seuilR :
+#                        k = [1,0]
+#                    else:
+#                        continue 
             s += PWF(Theta_I,pi,pj) * GWF(G_I,pi,pj)
     return s
 
@@ -182,7 +187,13 @@ if __name__ == "__main__" :
     
     
     # Calcul de la carte de symetrie
+    """
+    La carte de symétrie devrait être en 2D et non en 3D
+    """
     S = np.zeros((L,C,3))
+    seuilR = np.max(G_Ir)
+    seuilV = np.max(G_Iv)
+    seuilB = np.max(G_Ib)
     for l in range(R,L-R+1):
         for c in range(R,C-R+1):
             S[l][c][0] = symetrie(l,c,gamma_R,G_Ir,Theta_Ir)

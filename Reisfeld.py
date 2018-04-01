@@ -37,7 +37,7 @@ def gradient(Ix,Iy):
     """
     Calcul du module du gradient
     """
-    G_I = np.zeros((L,C))
+    G_I = np.zeros((Ix.shape[0],Ix.shape[1]))
     for l in range(Ix.shape[0]):
         for c in range(Iy.shape[1]):
             G_I[l][c] = np.sqrt(Ix[l][c]**2 + Iy[l][c]**2)
@@ -48,9 +48,9 @@ def theta(Ix,Iy):
     """
     Calcul de la direction du gradient
     """
-    Theta_I = np.zeros((L,C))
-    for l in range(L):
-        for c in range(C):
+    Theta_I = np.zeros((Ix.shape[0],Ix.shape[1]))
+    for l in range(Ix.shape[0]):
+        for c in range(Ix.shape[1]):
             if Iy[l][c]==0:
                 Theta_I[l][c]=0
             else:
